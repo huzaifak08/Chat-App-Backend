@@ -1,26 +1,31 @@
 require('dotenv').config({path:`${process.cwd()}/.env`});
 const express = require('express');
 const cors = require('cors');
-const authRoute = require('./routes/auth_route');
 var http = require('http');
 const app = express();
 
+
+const authRoute = require('./routes/auth_route');
+const chatRoute = require('./routes/chat_route');
+
 var server = http.createServer(app);
-var io = require("socket.io")(server,{
-    cors:{
-        origin:'*',
-    }
-})
+const io = require('socket.io')(server);
 
 app.use(express.json());
 app.use(cors());
 
+var clients = {};
+
 io.on('connection',(socket)=>{
-    console.log('Connected to Socket.IO');
-    console.log(socket.id,'has Joined');
-    socket.on('/test',(msg)=>{
-        console.log(msg);
+    console.log(`Client Connected: ${socket.id}`);
+    socket.on('signin',(id)=>{
+        console.log(id);
+        clients[id] = socket;
+        console.log(clients);
     });
+    socket.on('message',(msg)=>{
+        console.log(msg);
+    })
 });
 
 app.get('/',(req,res)=>{
@@ -33,6 +38,7 @@ app.get('/',(req,res)=>{
 
 // All Routes here:
 app.use('/api/v1/auth',authRoute);
+app.use('/api/v1/chat',chatRoute);
 
 app.use('*',(req,res,next)=>{
     res.status(400).send({
