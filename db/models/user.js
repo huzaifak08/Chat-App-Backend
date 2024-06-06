@@ -1,25 +1,16 @@
 'use strict';
 const {
-  Model,Sequelize,DataTypes
+  Model,DataTypes
 } = require('sequelize');
-
 const sequelize = require('../../config/database');
-const { password } = require('pg/lib/defaults');
-
-module.exports = sequelize.define('users',{
+module.exports = sequelize.define('users', {
   id: {
     allowNull: false,
     autoIncrement: true,
     primaryKey: true,
     type: DataTypes.INTEGER
   },
-  userType: {
-    type: DataTypes.ENUM('0','1','2')
-  },
-  firstName: {
-    type: DataTypes.STRING
-  },
-  lastName: {
+  name: {
     type: DataTypes.STRING
   },
   email: {
@@ -28,9 +19,6 @@ module.exports = sequelize.define('users',{
   password: {
     type: DataTypes.STRING
   },
-  confirmPassword:{
-    type: DataTypes.VIRTUAL,
-  },
   createdAt: {
     allowNull: false,
     type: DataTypes.DATE
@@ -38,13 +26,5 @@ module.exports = sequelize.define('users',{
   updatedAt: {
     allowNull: false,
     type: DataTypes.DATE
-  },
-  deletedAt: {
-    type: DataTypes.DATE
   }
-},{
-  paranoid:true,
-  freezeTableName:true,
-  modelName:'users'
 });
-

@@ -1,4 +1,4 @@
-const user = require("../db/models/user");
+const User = require("../db/models/user");
 const bcryptjs = require('bcryptjs');
 const jwt = require("jsonwebtoken");
 
@@ -8,26 +8,55 @@ const generateToken = (payload)=>{
     });
 }
 
-const signup = async (req,res,next)=>{
-    const body = req.body;
+const signup = async (req,res)=>{
+    const {name,email,password,confirmPassword} = req.body;
 
-    if(!['1','2'].includes(body.userType)){
-        return res.status(400).json({
-            status:"fail",
-            message:'Invalid user type',
-        })
+    // if(!['1','2'].includes(body.userType)){
+    //     return res.status(400).json({
+    //         status:"fail",
+    //         message:'Invalid user type',
+    //     })
+    // }
+
+    const existingUser = await User.findOne({ where: { email } });
+
+    if (existingUser) {
+      return res.status(401).json({ 
+        status:"fail",
+        message: "User Already Exists"
+    });
     }
 
-    const hashedPass = await bcryptjs.hash(body.password, 8);
+    const emailRegex = /^[a-zA-Z0-9.a-zA-Z0-9.!#$%&'*+-/=?^_`{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+$/;
+  if (!emailRegex.test(email)) {
+    return res.status(400).json({
+      status: "fail",
+      message: "Invalid email format",
+    });
+  }
 
-    const newUser = await user.create({
-        userType : body.userType,
-        firstName:body.firstName,
-        lastName:body.lastName,
-        email:body.email,
+    const hashedPass = await bcryptjs.hash(password, 8);
+
+    const newUser = await User.create({
+        name:name,
+        email:email,
         password:hashedPass,
-        confirmPassword:hashedPass,
-    })
+        confirmPassword:confirmPassword,
+    });
+
+    if (password.length < 6) {
+        return res.status(400).json({
+          status: "fail",
+          message: "Password must be at least 6 characters long",
+        });
+      }
+
+    if (password !== confirmPassword) {
+        return res.status(401).json({
+          status: "fail",
+          message: "Password and Confirm do not match",
+        });
+      }
 
     const result = newUser.toJSON();
 
@@ -39,14 +68,14 @@ const signup = async (req,res,next)=>{
     })
 
     if(!result){
-        return res.status(400).json({
-            status:'fail',
-            message:'Failed to create user'
-        });
+        return res.status(401).json({
+            status: "fail",
+            message: "Failed to create user" });
     }
 
     return res.status(201).json({
         status:'success',
+        message:'Welcome to ChitChat',
         data:result,
     });
 };
@@ -56,16 +85,16 @@ const login = async (req,res,next)=>{
     const {email,password} = req.body;
 
     if(!email || !password){
-        return  res.status(400).json({
+        return  res.json({
             status:'fail',
             message:'Please enter Email and Password'
         });
     }
 
-    const result =await user.findOne({where: {email }});
+    const result =await User.findOne({where: {email }});
 
     if(!result){
-        return res.status(400).json({
+        return res.json({
             status:'fail',
             message:'Incorrect email or password',
         });
@@ -74,7 +103,7 @@ const login = async (req,res,next)=>{
     const isPasswordMatched = await bcryptjs.compare(password,result.password);
 
     if(!isPasswordMatched){
-        return res.status(400).json({
+        return res.json({
             status:'fail',
             message:'Incorrect Password',
         });
@@ -86,6 +115,7 @@ const login = async (req,res,next)=>{
 
     return res.status(200).json({
         status:'success',
+        message:'Welcome to Chit Chat',
         token:token
     });
 
