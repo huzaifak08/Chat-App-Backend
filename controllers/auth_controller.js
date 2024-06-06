@@ -27,6 +27,13 @@ const signup = async (req,res)=>{
     });
     }
 
+    if( !name || !email || !password || !confirmPassword){
+        return  res.status(400).json({
+            status:'fail',
+            message:'All fields are compulsory'
+        });
+    }
+
     const emailRegex = /^[a-zA-Z0-9.a-zA-Z0-9.!#$%&'*+-/=?^_`{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+$/;
   if (!emailRegex.test(email)) {
     return res.status(400).json({
@@ -85,16 +92,24 @@ const login = async (req,res,next)=>{
     const {email,password} = req.body;
 
     if(!email || !password){
-        return  res.json({
+        return  res.status(400).json({
             status:'fail',
             message:'Please enter Email and Password'
         });
     }
 
+    const emailRegex = /^[a-zA-Z0-9.a-zA-Z0-9.!#$%&'*+-/=?^_`{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({
+        status: "fail",
+        message: "Invalid email format",
+      });
+    }
+
     const result =await User.findOne({where: {email }});
 
     if(!result){
-        return res.json({
+        return res.status(400).json({
             status:'fail',
             message:'Incorrect email or password',
         });
@@ -103,7 +118,7 @@ const login = async (req,res,next)=>{
     const isPasswordMatched = await bcryptjs.compare(password,result.password);
 
     if(!isPasswordMatched){
-        return res.json({
+        return res.status(400).json({
             status:'fail',
             message:'Incorrect Password',
         });
